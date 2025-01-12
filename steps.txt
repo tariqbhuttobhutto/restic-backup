@@ -1,0 +1,100 @@
+----------------------------------------------------------------------
+Step 1: Update system install restic
+----------------------------------------------------------------------
+sudo apt update
+sudo apt install restic
+----------------------------------------------------------------------
+Step 2: Set up SSH access between VMs
+----------------------------------------------------------------------
+Create SSH key pair
+ssh-keygen -t rsa -b 2048 -f ~/.ssh/id_rsa
+(Empty passphrase)
+
+Copy key
+ssh-copy-id user@destination_vm_ip
+
+Test acccess
+ssh user@destination_vm_ip
+----------------------------------------------------------------------
+Step 3: Initialize Restic Repository
+----------------------------------------------------------------------
+export RESTIC_PASSWORD="your_password"
+export RESTIC_REPOSITORY="sftp:user@source_vm_ip:/path/to/backup/directory"
+restic init
+----------------------------------------------------------------------
+Step 4: Create Backup Script
+----------------------------------------------------------------------
+sudo nano /usr/local/bin/backup.sh
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+#!/bin/bash
+# Set environment variables for restic
+export RESTIC_PASSWORD="your_password"
+export RESTIC_REPOSITORY="sftp:user@destination_vm_ip:/path/to/backup/directory"
+
+# Set the source directory to back up (the user's home directory)
+SRC_DIR="/home/$USER"
+
+# Run restic backup
+restic backup $SRC_DIR
+
+# Check if the backup was successful
+if [ $? -eq 0 ]; then
+  echo "Backup completed successfully."
+else
+  echo "Backup failed."
+fi
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+sudo chmod +x /usr/local/bin/backup.sh
+----------------------------------------------------------------------
+Step 5: Create systemd Service File
+----------------------------------------------------------------------
+sudo nano /etc/systemd/system/restic-backup.service
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+[Unit]
+Description=Restic Backup Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/backup.sh
+User=$USER
+Environment="RESTIC_PASSWORD=your_password"
+Environment="RESTIC_REPOSITORY=sft:user@destination_vm_ip:/path/to/backup/directory"
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+----------------------------------------------------------------------
+Step 6: Create systemd Timer File
+----------------------------------------------------------------------
+sudo nano /etc/systemd/system/restic-backup.timer
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+[Unit]
+Description=Run Restic Backup 5 minutes after boot
+
+[Timer]
+OnBootSec=5min
+Unit=restic-backup.service
+
+[Install]
+WantedBy=timers.target
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+----------------------------------------------------------------------
+Step 7: Enable and Start the Timer
+----------------------------------------------------------------------
+sudo systemctl daemon-reload
+sudo systemctl enable --now restic-backup.timer
+sudo systemctl status restic-backup.timer
+----------------------------------------------------------------------
+Step 8: Verify the Backup
+----------------------------------------------------------------------
+journalctl -u restic-backup.service
+
+----------------------------------------------------------------------
+Steps to Explore Files:
+----------------------------------------------------------------------
+restic -r <repository-path> snapshots
+restic -r <repository-path> ls <snapshot-id>
+restic -r sftp:mn@192.168.56.101:/home/mn/restic-repository ls a1b2c3d4
+restic -r <repository-path> mount /mnt/restic
+----------------------------------------------------------------------
+Restore specific files without mounting
+----------------------------------------------------------------------
+restic -r <repository-path> restore <snapshot-id> --target <restore-path> --include <file-path>
