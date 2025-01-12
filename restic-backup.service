@@ -6,5 +6,5 @@ After=network.target
 Type=simple
 ExecStart=/usr/local/bin/backup.sh
 User=mn
-Environment="RESTIC_PASSWORD=aa"
-Environment="RESTIC_REPOSITORY=sftp:mn@192.168.56.101:/home/mn/restic-repository"
+Environment="RESTIC_PASSWORD="tb
+Environment="RESTIC_REPOSITORY=sftp:tb@192.168.56.101:/home/mn/restic-repository"
