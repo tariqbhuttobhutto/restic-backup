@@ -1,6 +1,6 @@
 #!/bin/bash
 # Set environment variables for restic
-export RESTIC_PASSWORD="aa"
+export RESTIC_PASSWORD="tb"
 export RESTIC_REPOSITORY="sftp:tb@192.168.56.101:/home/tb/restic-repository"
 
 # Set the source directory to back up (the user's home directory)
